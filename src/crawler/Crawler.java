@@ -16,6 +16,8 @@ import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 
+import static utils.Constants.*;
+
 public class Crawler {
 
 	private List<String> urlWaiting = new ArrayList<String>();		//A list of URLs that are waiting to be processed
@@ -24,8 +26,8 @@ public class Crawler {
 	
 	private int numFindUrl = 0;		//find the number of url
 
-	private final SimpleDateFormat sFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss.SSS");
-	private static final String USER_AGENT = "2016IR201330551365";
+	private final SimpleDateFormat sFormat = new SimpleDateFormat(DATE_FORMAT);
+
 	public Crawler() {}
 
 	
@@ -38,10 +40,10 @@ public class Crawler {
 			processURL(urlWaiting.remove(0));
 		}
 		
-		log("finish crawling");
-		log("the number of urls that were found:" + numFindUrl);
-		log("the number of urls that were processed:" + urlProcessed.size());
-		log("the number of urls that resulted in an error:" + urlError.size());
+//		log("finish crawling");
+//		log("the number of urls that were found:" + numFindUrl);
+//		log("the number of urls that were processed:" + urlProcessed.size());
+//		log("the number of urls that resulted in an error:" + urlError.size());
 	}
 
 	/**
@@ -54,7 +56,8 @@ public class Crawler {
 		URL url = null;
 		try {
 			url = new URL(strUrl);
-			log("Processing: " + url);
+			//log("Processing: " + url);
+			
 			// get the URL's contents
 			URLConnection connection = url.openConnection();
 			connection.setRequestProperty("User-Agent", USER_AGENT);
@@ -62,25 +65,31 @@ public class Crawler {
 			if ((connection.getContentType() != null)
 					&& !connection.getContentType().toLowerCase()
 							.startsWith("text/")) {
-				log("Not processing because content type is: "
-						+ connection.getContentType());
+//				log("Not processing because content type is: "
+//						+ connection.getContentType());
+				log(TYPE_CONNECTING, url.toString(), TAG_ERROR);
 				return;
 			}
+			log(TYPE_CONNECTING, url.toString(), TAG_SUCCESS);
 
 			// read the URL
 			InputStream is = connection.getInputStream();
 			Reader r = new InputStreamReader(is);
+            log(TYPE_FETCHING, url.toString(), TAG_SUCCESS);
+			
 			// parse the URL
 			HTMLEditorKit.Parser parse = new HTMLParse().getParser();
 			parse.parse(r, new Parser(url), true);
+            log(TYPE_PARSING, url.toString(), TAG_SUCCESS);
 		} catch (IOException e) {
 			urlError.add(url.toString());
-			log("Error: " + url);
-			return;
+			//log("Error: " + url);
+			log(TYPE_FETCHING, url.toString(), TAG_ERROR);
+            return;
 		}
 		// mark URL as complete
 		urlProcessed.add(url.toString());
-		log("Complete: " + url);
+		//log("Complete: " + url);
 	}
 
 	/**
@@ -95,7 +104,7 @@ public class Crawler {
 			return;
 		if (urlProcessed.contains(url))
 			return;
-		log("Adding to workload: " + url);
+		//log("Adding to workload: " + url);
 		urlWaiting.add(url);
 		numFindUrl++;
 	}
@@ -107,11 +116,20 @@ public class Crawler {
 	 * @param entry
 	 *            The information to be written to the log.
 	 */
-	public void log(String entry) {
+//	public void log(String entry) {
+//		String date = sFormat.format(new Date());
+//		System.out.println(USER_AGENT + " " 
+//							+ date + " " 
+//							+ entry);
+//	}
+	
+	public void log(String type, String url, String tag){
 		String date = sFormat.format(new Date());
-		System.out.println(USER_AGENT + " " 
-							+ date + " " 
-							+ entry);
+		System.out.println(USER_AGENT + " "
+				+ date + " "
+				+ type + " "
+				+ url + " " 
+				+ tag);
 	}
 	
 	
@@ -161,7 +179,8 @@ public class Crawler {
 				URL url = new URL(base, str);
 				addURL(url.toString());
 			} catch (MalformedURLException e) {
-				log("Found malformed URL: " + str);
+				//log("Found malformed URL: " + str);
+
 			}
 		}
 	}
@@ -171,7 +190,7 @@ public class Crawler {
 	 */
 	public static void main(String[] args) {
 		Crawler crawler = new Crawler();
-		crawler.addURL("http://www.scut.edu.cn");
+		crawler.addURL(SEED_URL);
 		crawler.begin();
 	}
 }
