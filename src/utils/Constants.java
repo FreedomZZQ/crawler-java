@@ -12,5 +12,5 @@ public abstract class Constants {
     public static final String TYPE_PARSING = "Parsing";
     public static final String TAG_SUCCESS = "Successful";
     public static final String TAG_ERROR = "Error";
-    public static final String LOG_FILE_NAME = "IR201330551365LOG";
+    public static final String LOG_FILE_NAME = "IR201330551365LOG.txt";
 }

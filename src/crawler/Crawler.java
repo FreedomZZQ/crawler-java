@@ -1,5 +1,7 @@
 package crawler;
 
+import utils.FileUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -125,11 +127,23 @@ public class Crawler {
 	
 	public void log(String type, String url, String tag){
 		String date = sFormat.format(new Date());
-		System.out.println(USER_AGENT + " "
-				+ date + " "
-				+ type + " "
-				+ url + " " 
-				+ tag);
+
+		StringBuilder sb = new StringBuilder();
+		sb.append(USER_AGENT);
+		sb.append(" ");
+		sb.append(date);
+		sb.append(" ");
+		sb.append(type);
+		sb.append(" ");
+		sb.append(url);
+		sb.append(" ");
+		sb.append(tag);
+        sb.append("\n\r");
+		System.out.println(sb.toString());
+
+        FileUtils.writeFileAppend(LOG_FILE_NAME, sb.toString());
+
+
 	}
 	
 	
