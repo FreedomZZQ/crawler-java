@@ -64,9 +64,10 @@ public class Crawler {
 			URLConnection connection = url.openConnection();
 			connection.setRequestProperty("User-Agent", USER_AGENT);
 
+			//judge url type
 			if ((connection.getContentType() != null)
 					&& !connection.getContentType().toLowerCase()
-							.startsWith("text/")) {
+							.startsWith(CONTENT_TYPE)) {
 //				log("Not processing because content type is: "
 //						+ connection.getContentType());
 				log(TYPE_CONNECTING, url.toString(), TAG_ERROR);
@@ -153,51 +154,51 @@ public class Crawler {
 		}
 	}
 
-	/**
-	 * A HTML parser callback used by this class to detect links
-	 * 
-	 */
-	protected class Parser extends HTMLEditorKit.ParserCallback {
-		protected URL base;
+    /**
+     * A HTML parser callback used by this class to detect links
+     *
+     */
+    protected class Parser extends HTMLEditorKit.ParserCallback {
+        protected URL base;
 
-		public Parser(URL base) {
-			this.base = base;
-		}
+        public Parser(URL base) {
+            this.base = base;
+        }
 
-		public void handleSimpleTag(HTML.Tag t, MutableAttributeSet a, int pos) {
-			String href = (String) a.getAttribute(HTML.Attribute.HREF);
+        public void handleSimpleTag(HTML.Tag t, MutableAttributeSet a, int pos) {
+            String href = (String) a.getAttribute(HTML.Attribute.HREF);
 
-			if ((href == null) && (t == HTML.Tag.FRAME))
-				href = (String) a.getAttribute(HTML.Attribute.SRC);
+            if ((href == null) && (t == HTML.Tag.FRAME))
+                href = (String) a.getAttribute(HTML.Attribute.SRC);
 
-			if (href == null)
-				return;
+            if (href == null)
+                return;
 
-			int i = href.indexOf('#');
-			if (i != -1)
-				href = href.substring(0, i);
+            int i = href.indexOf('#');
+            if (i != -1)
+                href = href.substring(0, i);
 
-			if (href.toLowerCase().startsWith("mailto:")) 
-				return;
+            if (href.toLowerCase().startsWith("mailto:"))
+                return;
 
-			handleLink(base, href);
-		}
+            handleLink(base, href);
+        }
 
-		public void handleStartTag(HTML.Tag t, MutableAttributeSet a, int pos) {
-			handleSimpleTag(t, a, pos); // handle the same way
+        public void handleStartTag(HTML.Tag t, MutableAttributeSet a, int pos) {
+            handleSimpleTag(t, a, pos); // handle the same way
 
-		}
+        }
 
-		protected void handleLink(URL base, String str) {
-			try {
-				URL url = new URL(base, str);
-				addURL(url.toString());
-			} catch (MalformedURLException e) {
-				//log("Found malformed URL: " + str);
+        protected void handleLink(URL base, String str) {
+            try {
+                URL url = new URL(base, str);
+                addURL(url.toString());
+            } catch (MalformedURLException e) {
+                //log("Found malformed URL: " + str);
 
-			}
-		}
-	}
+            }
+        }
+    }
 
 	/**
 	 * @param args
