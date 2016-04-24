@@ -113,18 +113,14 @@ public class Crawler {
 	}
 
 	/**
-	 * Called internally to log information This basic method just writes the
-	 * log out to the stdout.
+	 * Called internally to log information
+	 * This method writes the log out to the log file.
 	 * 
-	 * @param entry
-	 *            The information to be written to the log.
+	 * @param type the type of the operation
+     * @param url the url of the operation
+     * @param tag the tag of the operation(successful or error)
+	 *
 	 */
-//	public void log(String entry) {
-//		String date = sFormat.format(new Date());
-//		System.out.println(USER_AGENT + " " 
-//							+ date + " " 
-//							+ entry);
-//	}
 	
 	public void log(String type, String url, String tag){
 		String date = sFormat.format(new Date());
