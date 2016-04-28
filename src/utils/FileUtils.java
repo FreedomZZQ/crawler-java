@@ -20,7 +20,7 @@ public class FileUtils {
             // 文件长度，字节数
 
             long fileLength = randomFile.length();
-            
+
             //将写文件指针移到文件尾
 
             randomFile.seek(fileLength);

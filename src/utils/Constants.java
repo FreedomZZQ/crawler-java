@@ -17,7 +17,7 @@ public abstract class Constants {
     /**
      * log记录中时间的显示格式
      */
-    public static final String DATE_FORMAT = "yyyy-mm-dd hh:mm:ss.SSS";
+    public static final String DATE_FORMAT = "yyyy-MM-dd hh:mm:ss.SSS";
     /**
      * 操作类型 连接
      */
