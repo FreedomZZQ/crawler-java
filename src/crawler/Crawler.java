@@ -9,10 +9,13 @@ import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.html.HTML;
@@ -22,15 +25,19 @@ import static utils.Constants.*;
 
 public class Crawler {
 
-	private List<String> urlWaiting = new ArrayList<String>();		//A list of URLs that are waiting to be processed
-	private List<String> urlProcessed = new ArrayList<String>();	//A list of URLs that were processed
-	private List<String> urlError = new ArrayList<String>();		//A list of URLs that resulted in an error
+	private List<String> urlWaiting = new ArrayList<>();		//A list of URLs that are waiting to be processed
+	private List<String> urlProcessed = new ArrayList<>();	//A list of URLs that were processed
+	private List<String> urlError = new ArrayList<>();		//A list of URLs that resulted in an error
+
+    private Map<String, Integer> urlDepth = new ConcurrentHashMap<>(); //记录链接深度
 	
 	private int numFindUrl = 0;		//find the number of url
 
 	private final SimpleDateFormat sFormat = new SimpleDateFormat(DATE_FORMAT);
 
-	public Crawler() {}
+	public Crawler() {
+        urlDepth.put(SEED_URL, 0);
+    }
 
 	
 	/**
@@ -65,6 +72,7 @@ public class Crawler {
 			connection.setRequestProperty("User-Agent", USER_AGENT);
 
 			//judge url type
+            //过滤不符合文件类型的链接
 			if ((connection.getContentType() != null)
 					&& !connection.getContentType().toLowerCase()
 							.startsWith(CONTENT_TYPE)) {
@@ -74,11 +82,17 @@ public class Crawler {
 				return;
 			}
 
-			//过滤小于 CONTENT_LENGTH 的文件链接
+			//过滤文件大小小于 CONTENT_LENGTH 的链接
 			if((connection.getContentLength() < CONTENT_LENGTH)){
 				log(TYPE_CONNECTING, url.toString(), TAG_ERROR);
 				return;
 			}
+
+            //过滤大于 SEARCH_DEPTH 的链接
+            if(urlDepth.get(strUrl) > SEARCH_DEPTH){
+                log(TYPE_CONNECTING, url.toString(), TAG_ERROR);
+                return;
+            }
 
 			log(TYPE_CONNECTING, url.toString(), TAG_SUCCESS);
 
@@ -143,8 +157,14 @@ public class Crawler {
 		sb.append(" ");
 		sb.append(tag);
         sb.append("\n\r");
-		System.out.println(sb.toString());
 
+        //打印log方便调试
+        System.out.println(sb.toString());
+        if(type.equals(TYPE_CONNECTING) && tag.equals(TAG_SUCCESS)) {
+            System.out.println(urlDepth.get(url));
+        }
+
+        //将记录写入log文件
         FileUtils.writeFileAppend(LOG_FILE_NAME, sb.toString());
 
 
@@ -196,6 +216,9 @@ public class Crawler {
             try {
                 URL url = new URL(base, str);
                 addURL(url.toString());
+                if(urlDepth.containsKey(base.toString())){
+                    urlDepth.put(url.toString(), urlDepth.get(base.toString()) + 1);
+                }
             } catch (MalformedURLException e) {
                 //log("Found malformed URL: " + str);
 
