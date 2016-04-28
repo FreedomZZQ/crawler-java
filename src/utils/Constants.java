@@ -14,4 +14,5 @@ public abstract class Constants {
     public static final String TAG_ERROR = "Error";
     public static final String LOG_FILE_NAME = "IR201330551365LOG.txt";
     public static final String CONTENT_TYPE = "text/";
+    public static final int CONTENT_LENGTH = 8000;
 }

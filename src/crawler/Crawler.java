@@ -73,6 +73,13 @@ public class Crawler {
 				log(TYPE_CONNECTING, url.toString(), TAG_ERROR);
 				return;
 			}
+
+			//过滤小于 CONTENT_LENGTH 的文件链接
+			if((connection.getContentLength() < CONTENT_LENGTH)){
+				log(TYPE_CONNECTING, url.toString(), TAG_ERROR);
+				return;
+			}
+
 			log(TYPE_CONNECTING, url.toString(), TAG_SUCCESS);
 
 			// read the URL
