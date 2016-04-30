@@ -1,6 +1,7 @@
 package crawler;
 
 import utils.FileUtils;
+import utils.LogHelper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,12 +12,13 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import javax.security.auth.login.LoginException;
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
@@ -25,17 +27,22 @@ import static utils.Constants.*;
 
 public class Crawler {
 
-	private List<String> urlWaiting = new ArrayList<>();		//A list of URLs that are waiting to be processed
-	private List<String> urlProcessed = new ArrayList<>();	//A list of URLs that were processed
-	private List<String> urlError = new ArrayList<>();		//A list of URLs that resulted in an error
+	private List<String> urlWaiting = new CopyOnWriteArrayList<>();		//A list of URLs that are waiting to be processed
+	private List<String> urlProcessed = new CopyOnWriteArrayList<>();	//A list of URLs that were processed
+	private List<String> urlError = new CopyOnWriteArrayList<>();		//A list of URLs that resulted in an error
 
     private Map<String, Integer> urlDepth = new ConcurrentHashMap<>(); //记录链接深度
+
+	private ExecutorService exec; //使用Executor管理线程
+
+    private static LogHelper logHelper = LogHelper.getInstance();
 	
 	private int numFindUrl = 0;		//find the number of url
 
 	private final SimpleDateFormat sFormat = new SimpleDateFormat(DATE_FORMAT);
 
 	public Crawler() {
+        exec = Executors.newFixedThreadPool(THREAD_MAXNUM);
         urlDepth.put(SEED_URL, 0);
     }
 
@@ -44,10 +51,25 @@ public class Crawler {
 	 * start crawling
 	 */
 	public void begin() {
-		
-		while (!urlWaiting.isEmpty()) {
-			processURL(urlWaiting.remove(0));
-		}
+
+        //双重校验锁，保证线程安全的同时提高运行效率
+        while(true){
+            if(!urlWaiting.isEmpty()){
+                synchronized (this){
+                    if((!urlWaiting.isEmpty())){
+                        String urlString = urlWaiting.remove(0);
+                        exec.execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                processURL(urlString);
+                            }
+                        });
+                    }
+                }
+            }
+
+        }
+
 		
 //		log("finish crawling");
 //		log("the number of urls that were found:" + numFindUrl);
@@ -61,12 +83,12 @@ public class Crawler {
 	 * @param strUrl
 	 *            The URL to be processed.
 	 */
-	public void processURL(String strUrl) {
+	public synchronized void processURL(String strUrl) {
 		URL url = null;
 		try {
 			url = new URL(strUrl);
 			//log("Processing: " + url);
-			
+
 			// get the URL's contents
 			URLConnection connection = url.openConnection();
 			connection.setRequestProperty("User-Agent", USER_AGENT);
@@ -100,7 +122,7 @@ public class Crawler {
 			InputStream is = connection.getInputStream();
 			Reader r = new InputStreamReader(is);
             log(TYPE_FETCHING, url.toString(), TAG_SUCCESS);
-			
+
 			// parse the URL
 			HTMLEditorKit.Parser parse = new HTMLParse().getParser();
 			parse.parse(r, new Parser(url), true);
@@ -121,7 +143,7 @@ public class Crawler {
 	 * 
 	 * @param url
 	 */
-	public void addURL(String url) {
+	public synchronized void addURL(String url) {
 		if (urlWaiting.contains(url))
 			return;
 		if (urlError.contains(url))
@@ -165,7 +187,8 @@ public class Crawler {
         }
 
         //将记录写入log文件
-        FileUtils.writeFileAppend(LOG_FILE_NAME, sb.toString());
+        //FileUtils.writeFileAppend(LOG_FILE_NAME, sb.toString());
+        logHelper.addLog(sb.toString());
 
 
 	}
@@ -212,7 +235,7 @@ public class Crawler {
 
         }
 
-        protected void handleLink(URL base, String str) {
+        protected synchronized void handleLink(URL base, String str) {
             try {
                 URL url = new URL(base, str);
                 addURL(url.toString());
@@ -230,6 +253,7 @@ public class Crawler {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+
 		Crawler crawler = new Crawler();
 		crawler.addURL(SEED_URL);
 		crawler.begin();

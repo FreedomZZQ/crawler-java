@@ -50,9 +50,13 @@ public abstract class Constants {
      * 设置要爬取的文件大小的下限
      * 单位：字节
      */
-    public static final int CONTENT_LENGTH = 8000;
+    public static final int CONTENT_LENGTH = 2000;
     /**
      * 设置爬取深度上限
      */
-    public static final int SEARCH_DEPTH = 10;
+    public static final int SEARCH_DEPTH = 15;
+    /**
+     * 设置最大线程数量
+     */
+    public static final int THREAD_MAXNUM = 3;
 }
